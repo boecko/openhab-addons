@@ -13,6 +13,7 @@
 package org.openhab.automation.groovyscripting.internal;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -38,6 +39,7 @@ import groovy.lang.GroovyClassLoader;
 public class GroovyScriptEngineFactory extends AbstractScriptEngineFactory {
 
     private static final String FILE_DIRECTORY = "automation" + File.separator + "groovy";
+    private static final String LIBS_DIRECTORY = "automation" + File.separator + "groovylibs";
     private final org.codehaus.groovy.jsr223.GroovyScriptEngineFactory factory = new org.codehaus.groovy.jsr223.GroovyScriptEngineFactory();
 
     private final List<String> scriptTypes = (List<String>) Stream.of(factory.getExtensions(), factory.getMimeTypes())
@@ -50,6 +52,17 @@ public class GroovyScriptEngineFactory extends AbstractScriptEngineFactory {
         String scriptDir = OpenHAB.getConfigFolder() + File.separator + FILE_DIRECTORY;
         logger.debug("Adding script directory {} to the GroovyScriptEngine class path.", scriptDir);
         gcl.addClasspath(scriptDir);
+
+        String scriptLibPath = OpenHAB.getConfigFolder() + File.separator + LIBS_DIRECTORY;
+        File scriptLibDir = new File(scriptLibPath);
+        if(scriptLibDir.isDirectory()) {
+            final FilenameFilter filter = (dir, name) -> name.toLowerCase().endsWith(".jar");
+            File[] files = scriptLibDir.listFiles(filter);
+            for (File jarFile : files) {
+                logger.debug("Adding {} to the GroovyScriptEngine class path.", jarFile.getPath());
+                gcl.addClasspath(jarFile.getPath());
+            }
+        }
     }
 
     @Override
